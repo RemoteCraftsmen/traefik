@@ -1,0 +1,58 @@
+version: '3'
+
+volumes:
+  portainer_data:
+
+services:
+  proxy:
+    container_name: traefik.docker
+    image: traefik:v2.1
+    command:
+      - --entrypoints.web.address=:80
+      - --providers.docker=true
+    networks:
+      - global
+    ports:
+      - "127.0.0.1:80:80"
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - $PWD/traefik.yml:/etc/traefik/traefik.yml
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+
+  ssh:
+    container_name: ssh.docker
+    image: panubo/sshd
+    networks:
+      - global
+    ports:
+      - "127.0.0.1:2222:22"
+    volumes:
+      - ~/data/ssh-etc-ssh-keys:/etc/ssh/keys:cached
+      - ~/.ssh/id_rsa.pub:/root/.ssh/authorized_keys:cached
+    environment:
+      SSH_ENABLE_ROOT: "true"
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+
+  portainer:
+    image:  portainer/portainer:
+    container_name: portainer.docker
+    networks:
+      - global
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - portainer_data:/data
+    stdin_open: true
+    tty: true
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.portainer.rule: "Host(`portainer.test`)"
+    restart: unless-stopped
+
+networks:
+  global:
+    external: true
