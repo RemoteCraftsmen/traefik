@@ -39,7 +39,7 @@ services:
     restart: unless-stopped
 
   portainer:
-    image:  portainer/portainer:
+    image:  portainer/portainer:1.23.1
     container_name: portainer.docker
     networks:
       - global
